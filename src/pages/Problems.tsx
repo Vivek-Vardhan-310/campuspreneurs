@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Search, ArrowRight, Mail, GraduationCap, Users, Lightbulb } from "lucide-react";
+import { Search, ArrowRight, GraduationCap, Users, Lightbulb, AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const themes = [
   {
@@ -28,142 +29,53 @@ const themes = [
   },
 ];
 
-const problems = [
-  // Academic Theme
-  {
-    id: "CP01",
-    title: "Smart Attendance Management System",
-    theme: "Academic",
-    organization: "Department of CSE",
-    category: "Software",
-    description: "Develop an automated attendance system using facial recognition or RFID that integrates with the existing ERP system.",
-    spoc: "Dr. Amit Sharma",
-    spocEmail: "amit.sharma@gcet.edu.in",
-  },
-  {
-    id: "CP02",
-    title: "AI-Based Exam Proctoring Solution",
-    theme: "Academic",
-    organization: "Examination Cell",
-    category: "Software/AI",
-    description: "Create an intelligent proctoring system for online examinations that detects suspicious activities.",
-    spoc: "Prof. Priya Verma",
-    spocEmail: "priya.verma@gcet.edu.in",
-  },
-  {
-    id: "CP03",
-    title: "Personalized Learning Path Generator",
-    theme: "Academic",
-    organization: "Department of AIML",
-    category: "Software/AI",
-    description: "Build an adaptive learning system that creates personalized study plans based on student performance.",
-    spoc: "Dr. Sunita Rao",
-    spocEmail: "sunita.rao@gcet.edu.in",
-  },
-  {
-    id: "CP04",
-    title: "Digital Lab Manual Platform",
-    theme: "Academic",
-    organization: "Department of ECE",
-    category: "Web Platform",
-    description: "Create an interactive digital platform for lab manuals with simulation capabilities.",
-    spoc: "Prof. Rahul Gupta",
-    spocEmail: "rahul.gupta@gcet.edu.in",
-  },
-  // Non-Academic Theme
-  {
-    id: "CP05",
-    title: "Smart Campus Navigation System",
-    theme: "Non-Academic",
-    organization: "Administration",
-    category: "Mobile App",
-    description: "Develop an AR-based indoor navigation app for visitors and new students to navigate the campus.",
-    spoc: "Prof. Vikram Joshi",
-    spocEmail: "vikram.joshi@gcet.edu.in",
-  },
-  {
-    id: "CP06",
-    title: "Hostel Management Automation",
-    theme: "Non-Academic",
-    organization: "Hostel Administration",
-    category: "Software",
-    description: "Create a comprehensive hostel management system for room allocation, complaints, and mess management.",
-    spoc: "Dr. Neha Singh",
-    spocEmail: "neha.singh@gcet.edu.in",
-  },
-  {
-    id: "CP07",
-    title: "Campus Energy Monitoring Dashboard",
-    theme: "Non-Academic",
-    organization: "Infrastructure Cell",
-    category: "IoT + Dashboard",
-    description: "Build an IoT-based system to monitor and optimize energy consumption across campus buildings.",
-    spoc: "Prof. Sanjay Kumar",
-    spocEmail: "sanjay.kumar@gcet.edu.in",
-  },
-  {
-    id: "CP08",
-    title: "Smart Parking Management",
-    theme: "Non-Academic",
-    organization: "Security Department",
-    category: "IoT + Software",
-    description: "Develop a smart parking system with real-time slot availability and vehicle tracking.",
-    spoc: "Mr. Rajesh Patel",
-    spocEmail: "rajesh.patel@gcet.edu.in",
-  },
-  // Community Innovation Theme
-  {
-    id: "CP09",
-    title: "Rural Health Awareness Platform",
-    theme: "Community Innovation",
-    organization: "NSS Cell",
-    category: "Web/Mobile App",
-    description: "Create a multilingual health awareness platform for rural communities with telemedicine features.",
-    spoc: "Dr. Kavita Sharma",
-    spocEmail: "kavita.sharma@gcet.edu.in",
-  },
-  {
-    id: "CP10",
-    title: "Farmer Connect Marketplace",
-    theme: "Community Innovation",
-    organization: "Innovation Council",
-    category: "E-Commerce Platform",
-    description: "Build a direct farmer-to-consumer marketplace eliminating middlemen for agricultural products.",
-    spoc: "Prof. Arun Mishra",
-    spocEmail: "arun.mishra@gcet.edu.in",
-  },
-  {
-    id: "CP11",
-    title: "Waste Segregation Awareness Game",
-    theme: "Community Innovation",
-    organization: "Environment Club",
-    category: "Gamification",
-    description: "Develop an educational game to teach waste segregation and recycling to school children.",
-    spoc: "Dr. Meera Reddy",
-    spocEmail: "meera.reddy@gcet.edu.in",
-  },
-  {
-    id: "CP12",
-    title: "Local Artisan Skill Mapping",
-    theme: "Community Innovation",
-    organization: "CSR Cell",
-    category: "Web Platform",
-    description: "Create a platform to map, showcase, and connect local artisans with potential buyers and training programs.",
-    spoc: "Prof. Deepak Verma",
-    spocEmail: "deepak.verma@gcet.edu.in",
-  },
-];
+interface ProblemStatement {
+  id: string;
+  problem_statement_id: string;
+  title: string;
+  description: string;
+  category: string;
+  theme: string;
+  created_at: string;
+}
 
 export default function Problems() {
   const [activeTheme, setActiveTheme] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [problems, setProblems] = useState<ProblemStatement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch problems from Supabase
+  useEffect(() => {
+    const fetchProblems = async () => {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from("problem_statements")
+        .select("*")
+        .order("problem_statement_id", { ascending: true });
+
+      if (fetchError) {
+        console.error("Error fetching problems:", fetchError);
+        setError("Failed to load problem statements. Please try again later.");
+      } else {
+        setProblems(data || []);
+      }
+
+      setLoading(false);
+    };
+
+    fetchProblems();
+  }, []);
 
   const filteredProblems = problems.filter((problem) => {
     const matchesTheme = activeTheme === "All" || problem.theme === activeTheme;
     const matchesSearch =
       problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       problem.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      problem.id.toLowerCase().includes(searchQuery.toLowerCase());
+      problem.problem_statement_id.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTheme && matchesSearch;
   });
 
@@ -286,92 +198,113 @@ export default function Problems() {
         </div>
       </section>
 
-      {/* Problem Cards - SIH Style */}
+      {/* Problem Cards */}
       <section className="py-12 lg:py-16 bg-background">
         <div className="container mx-auto px-4">
-          <div className="mb-6 flex items-center justify-between">
-            <p className="text-muted-foreground">
-              Showing <span className="font-semibold text-foreground">{filteredProblems.length}</span> problem statements
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {filteredProblems.map((problem) => (
-              <div
-                key={problem.id}
-                className="bg-card rounded-xl border border-border hover:border-secondary/50 hover:shadow-card transition-all overflow-hidden"
-              >
-                <div className="flex flex-col lg:flex-row">
-                  {/* Problem ID Section */}
-                  <div className={`lg:w-32 p-4 lg:p-6 flex lg:flex-col items-center lg:items-start justify-center ${getThemeColor(problem.theme)}`}>
-                    <span className="text-2xl lg:text-3xl font-bold font-poppins">{problem.id}</span>
-                  </div>
-
-                  {/* Main Content */}
-                  <div className="flex-1 p-4 lg:p-6">
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getThemeColor(problem.theme)}`}>
-                        {problem.theme}
-                      </span>
-                      <span className="bg-muted px-3 py-1 rounded-full text-xs font-medium text-muted-foreground">
-                        {problem.category}
-                      </span>
-                    </div>
-
-                    <h3 className="font-poppins font-semibold text-lg text-foreground mb-2">
-                      {problem.title}
-                    </h3>
-
-                    <p className="text-muted-foreground text-sm mb-4">
-                      {problem.description}
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-4 text-sm">
-                      <span className="text-muted-foreground">
-                        <strong className="text-foreground">Organization:</strong> {problem.organization}
-                      </span>
-                      <span className="text-muted-foreground">
-                        <strong className="text-foreground">SPOC:</strong> {problem.spoc}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="lg:w-48 p-4 lg:p-6 flex lg:flex-col items-center justify-center gap-3 border-t lg:border-t-0 lg:border-l border-border bg-highlight/50">
-                    <a
-                      href={`mailto:${problem.spocEmail}`}
-                      className="text-primary hover:text-secondary transition-colors flex items-center gap-1 text-sm"
-                    >
-                      <Mail className="w-4 h-4" />
-                      Contact SPOC
-                    </a>
-                    <Button asChild size="sm" variant="orange">
-                      <Link to={`/problems/${problem.id}`}>
-                        View Details
-                        <ArrowRight className="w-4 h-4 ml-1" />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <Search className="w-6 h-6 text-primary-foreground" />
               </div>
-            ))}
-          </div>
+              <p className="text-muted-foreground">Loading problem statements...</p>
+            </div>
+          )}
 
-          {filteredProblems.length === 0 && (
+          {/* Error State */}
+          {error && !loading && (
             <div className="text-center py-12 bg-card rounded-xl border border-border">
-              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No problem statements found matching your criteria.</p>
+              <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">{error}</p>
               <Button
                 variant="outline"
-                className="mt-4"
-                onClick={() => {
-                  setActiveTheme("All");
-                  setSearchQuery("");
-                }}
+                onClick={() => window.location.reload()}
               >
-                Clear Filters
+                Try Again
               </Button>
             </div>
+          )}
+
+          {/* Problems List */}
+          {!loading && !error && (
+            <>
+              <div className="mb-6 flex items-center justify-between">
+                <p className="text-muted-foreground">
+                  Showing <span className="font-semibold text-foreground">{filteredProblems.length}</span> problem statements
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {filteredProblems.map((problem) => (
+                  <div
+                    key={problem.id}
+                    className="bg-card rounded-xl border border-border hover:border-secondary/50 hover:shadow-card transition-all overflow-hidden"
+                  >
+                    <div className="flex flex-col lg:flex-row">
+                      {/* Problem ID Section */}
+                      <div className={`lg:w-32 p-4 lg:p-6 flex lg:flex-col items-center lg:items-start justify-center ${getThemeColor(problem.theme)}`}>
+                        <span className="text-2xl lg:text-3xl font-bold font-poppins">{problem.problem_statement_id}</span>
+                      </div>
+
+                      {/* Main Content */}
+                      <div className="flex-1 p-4 lg:p-6">
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getThemeColor(problem.theme)}`}>
+                            {problem.theme}
+                          </span>
+                          <span className="bg-muted px-3 py-1 rounded-full text-xs font-medium text-muted-foreground">
+                            {problem.category}
+                          </span>
+                        </div>
+
+                        <h3 className="font-poppins font-semibold text-lg text-foreground mb-2">
+                          {problem.title}
+                        </h3>
+
+                        <p className="text-muted-foreground text-sm line-clamp-2">
+                          {problem.description}
+                        </p>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="lg:w-40 p-4 lg:p-6 flex items-center justify-center border-t lg:border-t-0 lg:border-l border-border bg-highlight/50">
+                        <Button asChild size="sm" variant="orange">
+                          <Link to={`/problems/${problem.problem_statement_id}`}>
+                            View Details
+                            <ArrowRight className="w-4 h-4 ml-1" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {filteredProblems.length === 0 && problems.length > 0 && (
+                <div className="text-center py-12 bg-card rounded-xl border border-border">
+                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No problem statements found matching your criteria.</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => {
+                      setActiveTheme("All");
+                      setSearchQuery("");
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              )}
+
+              {problems.length === 0 && (
+                <div className="text-center py-12 bg-card rounded-xl border border-border">
+                  <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-foreground font-medium mb-2">No Problem Statements Yet</p>
+                  <p className="text-muted-foreground">Problem statements will appear here once they are added to the database.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
