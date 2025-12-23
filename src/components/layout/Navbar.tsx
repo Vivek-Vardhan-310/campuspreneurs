@@ -1,22 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogIn, LogOut, User } from "lucide-react";
+import { Menu, X, LogIn, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-
-const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "Problem Statements", path: "/problems" },
-  { name: "Event Structure", path: "/event-structure" },
-  { name: "Resources", path: "/resources" },
-  { name: "Registration", path: "/registration" },
-  { name: "Contact", path: "/contact" },
-];
+import { useAdmin } from "@/hooks/useAdmin";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
+
+  // Dynamic nav links based on admin status
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "Problem Statements", path: "/problems" },
+    { name: "Event Structure", path: "/event-structure" },
+    { name: "Resources", path: "/resources" },
+    // Show Dashboard for admins, Registration for regular users
+    isAdmin 
+      ? { name: "Dashboard", path: "/admin" }
+      : { name: "Registration", path: "/registration" },
+    { name: "Contact", path: "/contact" },
+  ];
 
   const handleSignOut = async () => {
     await signOut();
@@ -57,6 +63,7 @@ export function Navbar() {
             {user ? (
               <div className="flex items-center gap-2 ml-2">
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  {isAdmin && <Shield className="w-4 h-4 text-secondary" />}
                   <User className="w-4 h-4" />
                   {user.email?.split("@")[0]}
                 </span>
@@ -115,6 +122,7 @@ export function Navbar() {
                 {user ? (
                   <div className="flex flex-col gap-2">
                     <span className="px-4 text-sm text-muted-foreground flex items-center gap-1">
+                      {isAdmin && <Shield className="w-4 h-4 text-secondary" />}
                       <User className="w-4 h-4" />
                       {user.email}
                     </span>

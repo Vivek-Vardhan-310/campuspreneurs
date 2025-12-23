@@ -13,6 +13,7 @@ import Resources from "./pages/Resources";
 import Registration from "./pages/Registration";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,14 @@ const App = () => (
             <Route path="/resources" element={<Resources />} />
             <Route path="/registration" element={<Registration />} />
             <Route path="/contact" element={<Contact />} />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

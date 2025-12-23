@@ -1,33 +1,26 @@
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { FileText, Download, HelpCircle, Calendar, BookOpen, FileSpreadsheet } from "lucide-react";
+import { FileText, Download, HelpCircle, Calendar, BookOpen, FileSpreadsheet, Edit, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/hooks/useAdmin";
+import { ResourceUploadDialog } from "@/components/admin/ResourceUploadDialog";
 
-const resources = [
-  {
-    title: "PPT Template",
-    description: "Official presentation template with guidelines for your final pitch.",
-    icon: FileText,
-    type: "PPTX",
-  },
-  {
-    title: "Evaluation Rubrics",
-    description: "Detailed scoring criteria used by the jury for assessment.",
-    icon: FileSpreadsheet,
-    type: "PDF",
-  },
-  {
-    title: "Rules & Guidelines",
-    description: "Complete rulebook covering eligibility, conduct, and submission rules.",
-    icon: BookOpen,
-    type: "PDF",
-  },
-  {
-    title: "Timeline PDF",
-    description: "Detailed schedule with important dates and deadlines.",
-    icon: Calendar,
-    type: "PDF",
-  },
-];
+const iconMap: Record<string, React.ElementType> = {
+  ppt_template: FileText,
+  evaluation_rubrics: FileSpreadsheet,
+  rules_guidelines: BookOpen,
+  timeline_pdf: Calendar,
+};
+
+interface Resource {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string | null;
+  file_type: string | null;
+  section_key: string;
+}
 
 const faqs = [
   {
@@ -57,6 +50,40 @@ const faqs = [
 ];
 
 export default function Resources() {
+  const { isAdmin } = useAdmin();
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+
+  const fetchResources = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("resources")
+      .select("*")
+      .order("section_key");
+
+    if (data) {
+      setResources(data);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchResources();
+  }, []);
+
+  const openEditDialog = (resource: Resource) => {
+    setSelectedResource(resource);
+    setEditDialogOpen(true);
+  };
+
+  const handleDownload = (resource: Resource) => {
+    if (resource.file_url) {
+      window.open(resource.file_url, "_blank");
+    }
+  };
+
   return (
     <Layout>
       {/* Header */}
@@ -80,31 +107,56 @@ export default function Resources() {
             </h2>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {resources.map((resource) => {
-              const Icon = resource.icon;
-              return (
-                <div
-                  key={resource.title}
-                  className="bg-card rounded-xl p-6 shadow-card hover:shadow-elevated transition-all hover:-translate-y-1 flex flex-col"
-                >
-                  <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <Icon className="w-7 h-7 text-primary" />
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Loading resources...</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+              {resources.map((resource) => {
+                const Icon = iconMap[resource.section_key] || FileText;
+                return (
+                  <div
+                    key={resource.id}
+                    className="bg-card rounded-xl p-6 shadow-card hover:shadow-elevated transition-all hover:-translate-y-1 flex flex-col"
+                  >
+                    <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <Icon className="w-7 h-7 text-primary" />
+                    </div>
+                    <h3 className="font-poppins font-semibold text-lg text-foreground">
+                      {resource.title}
+                    </h3>
+                    <p className="mt-2 text-muted-foreground text-sm flex-1">
+                      {resource.description}
+                    </p>
+                    <div className="mt-4 space-y-2">
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        size="sm"
+                        onClick={() => handleDownload(resource)}
+                        disabled={!resource.file_url}
+                      >
+                        <Download className="w-4 h-4" />
+                        {resource.file_url ? `Download ${resource.file_type || "File"}` : "Not Available"}
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          className="w-full"
+                          size="sm"
+                          onClick={() => openEditDialog(resource)}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Update File
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="font-poppins font-semibold text-lg text-foreground">
-                    {resource.title}
-                  </h3>
-                  <p className="mt-2 text-muted-foreground text-sm flex-1">
-                    {resource.description}
-                  </p>
-                  <Button variant="outline" className="mt-4 w-full" size="sm">
-                    <Download className="w-4 h-4" />
-                    Download {resource.type}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -144,6 +196,14 @@ export default function Resources() {
           </div>
         </div>
       </section>
+
+      {/* Admin Upload Dialog */}
+      <ResourceUploadDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        resource={selectedResource}
+        onSuccess={fetchResources}
+      />
     </Layout>
   );
 }
