@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Search, ArrowRight, GraduationCap, Users, Lightbulb, AlertCircle } from "lucide-react";
+import { Search, ArrowRight, GraduationCap, Users, Lightbulb, AlertCircle, Plus, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/hooks/useAdmin";
+import { ProblemFormDialog } from "@/components/admin/ProblemFormDialog";
+import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
+import { toast } from "sonner";
 
 const themes = [
   {
@@ -45,30 +49,100 @@ export default function Problems() {
   const [problems, setProblems] = useState<ProblemStatement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAdmin } = useAdmin();
 
-  // Fetch problems from Supabase
+  // Admin state
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedProblem, setSelectedProblem] = useState<ProblemStatement | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const fetchProblems = async () => {
+    setLoading(true);
+    setError(null);
+
+    const { data, error: fetchError } = await supabase
+      .from("problem_statements")
+      .select("*")
+      .order("problem_statement_id", { ascending: true });
+
+    if (fetchError) {
+      console.error("Error fetching problems:", fetchError);
+      setError("Failed to load problem statements. Please try again later.");
+    } else {
+      setProblems(data || []);
+    }
+
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchProblems = async () => {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from("problem_statements")
-        .select("*")
-        .order("problem_statement_id", { ascending: true });
-
-      if (fetchError) {
-        console.error("Error fetching problems:", fetchError);
-        setError("Failed to load problem statements. Please try again later.");
-      } else {
-        setProblems(data || []);
-      }
-
-      setLoading(false);
-    };
-
     fetchProblems();
   }, []);
+
+  const handleSave = async (data: Omit<ProblemStatement, "id" | "created_at">) => {
+    setSaving(true);
+    try {
+      if (selectedProblem) {
+        // Update existing
+        const { error } = await supabase
+          .from("problem_statements")
+          .update(data)
+          .eq("id", selectedProblem.id);
+        if (error) throw error;
+        toast.success("Problem statement updated");
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from("problem_statements")
+          .insert([data]);
+        if (error) throw error;
+        toast.success("Problem statement created");
+      }
+      setFormOpen(false);
+      setSelectedProblem(null);
+      fetchProblems();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedProblem) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("problem_statements")
+        .delete()
+        .eq("id", selectedProblem.id);
+      if (error) throw error;
+      toast.success("Problem statement deleted");
+      setDeleteOpen(false);
+      setSelectedProblem(null);
+      fetchProblems();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openEditDialog = (problem: ProblemStatement) => {
+    setSelectedProblem(problem);
+    setFormOpen(true);
+  };
+
+  const openDeleteDialog = (problem: ProblemStatement) => {
+    setSelectedProblem(problem);
+    setDeleteOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setSelectedProblem(null);
+    setFormOpen(true);
+  };
 
   const filteredProblems = problems.filter((problem) => {
     const matchesTheme = activeTheme === "All" || problem.theme === activeTheme;
@@ -120,6 +194,16 @@ export default function Problems() {
               <p className="text-sm">Themes</p>
             </div>
           </div>
+          {isAdmin && (
+            <Button
+              onClick={openCreateDialog}
+              className="mt-6"
+              variant="heroOutline"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Problem Statement
+            </Button>
+          )}
         </div>
       </section>
 
@@ -267,7 +351,28 @@ export default function Problems() {
                       </div>
 
                       {/* Actions */}
-                      <div className="lg:w-40 p-4 lg:p-6 flex items-center justify-center border-t lg:border-t-0 lg:border-l border-border bg-highlight/50">
+                      <div className="lg:w-auto p-4 lg:p-6 flex items-center justify-center gap-2 border-t lg:border-t-0 lg:border-l border-border bg-highlight/50">
+                        {isAdmin && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => openEditDialog(problem)}
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => openDeleteDialog(problem)}
+                              title="Delete"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                         <Button asChild size="sm" variant="orange">
                           <Link to={`/problems/${problem.problem_statement_id}`}>
                             View Details
@@ -328,6 +433,23 @@ export default function Problems() {
           </div>
         </div>
       </section>
+
+      {/* Admin Dialogs */}
+      <ProblemFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        problem={selectedProblem}
+        onSave={handleSave}
+        loading={saving}
+      />
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDelete}
+        title="Delete Problem Statement"
+        description={`Are you sure you want to delete "${selectedProblem?.title}"? This action cannot be undone.`}
+        loading={saving}
+      />
     </Layout>
   );
 }

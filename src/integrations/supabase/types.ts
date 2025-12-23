@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      page_content: {
+        Row: {
+          content: Json
+          id: string
+          page_name: string
+          section_key: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          id?: string
+          page_name: string
+          section_key: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          id?: string
+          page_name?: string
+          section_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       problem_statements: {
         Row: {
           category: string
@@ -65,6 +89,36 @@ export type Database = {
           id?: string
           name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      resources: {
+        Row: {
+          description: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          section_key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          section_key: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          section_key?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
