@@ -122,6 +122,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_queries: {
+        Row: {
+          created_at: string
+          id: string
+          query_text: string
+          resolved_at: string | null
+          status: string
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          query_text: string
+          resolved_at?: string | null
+          status?: string
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          query_text?: string
+          resolved_at?: string | null
+          status?: string
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

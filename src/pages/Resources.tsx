@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { FileText, Download, HelpCircle, Calendar, BookOpen, FileSpreadsheet, Edit, Upload } from "lucide-react";
+import { FileText, Download, HelpCircle, Calendar, BookOpen, FileSpreadsheet, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { ResourceUploadDialog } from "@/components/admin/ResourceUploadDialog";
+import { QuerySubmissionForm } from "@/components/resources/QuerySubmissionForm";
+import { AdminQueryList } from "@/components/resources/AdminQueryList";
 
 const iconMap: Record<string, React.ElementType> = {
   ppt_template: FileText,
@@ -157,6 +159,24 @@ export default function Resources() {
               })}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Admin Query Management */}
+      {isAdmin && (
+        <section className="py-16 lg:py-24 bg-muted">
+          <div className="container mx-auto px-4">
+            <AdminQueryList />
+          </div>
+        </section>
+      )}
+
+      {/* User Query Submission */}
+      <section className="py-16 lg:py-24 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto">
+            <QuerySubmissionForm />
+          </div>
         </div>
       </section>
 
