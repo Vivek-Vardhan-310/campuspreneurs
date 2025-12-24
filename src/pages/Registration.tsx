@@ -15,6 +15,8 @@ export default function Registration() {
     member2Roll: "",
     member3Name: "",
     member3Roll: "",
+    member4Name: "",
+    member4Roll: "",
     year: "",
     department: "",
     phone: "",
@@ -112,10 +114,10 @@ export default function Registration() {
               {/* Team Members */}
               <div>
                 <h3 className="font-poppins font-semibold text-lg text-foreground border-b border-border pb-3 mb-6">
-                  Team Members (Minimum 3)
+                  Team Members Details
                 </h3>
                 <div className="space-y-6">
-                  {[1, 2, 3].map((num) => (
+                  {[1, 2, 3, 4].map((num) => (
                     <div key={num} className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">

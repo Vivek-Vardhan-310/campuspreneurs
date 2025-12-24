@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogIn, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ export function Navbar() {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
 
-  // Dynamic nav links based on admin status
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "About Us", path: "/about" },
@@ -19,7 +18,6 @@ export function Navbar() {
     { name: "Problem Statements", path: "/problems" },
     { name: "Event Structure", path: "/event-structure" },
     { name: "Resources", path: "/resources" },
-    // Show Dashboard for admins, Registration for regular users
     isAdmin
       ? { name: "Dashboard", path: "/admin" }
       : { name: "Registration", path: "/registration" },
@@ -32,39 +30,28 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+
+        {/* ================= TOP ROW ================= */}
+        <div className="h-14 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-poppins font-bold text-lg">C</span>
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-lg">
+                C
+              </span>
             </div>
-            <span className="font-poppins font-semibold text-lg text-foreground hidden sm:block">
+            <span className="font-semibold text-lg hidden sm:block">
               Campuspreneurs
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location.pathname === link.path
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-accent"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-            
-            {/* Auth Button */}
+          {/* Desktop Auth */}
+          <div className="hidden md:flex items-center gap-3 whitespace-nowrap">
             {user ? (
-              <div className="flex items-center gap-2 ml-2">
-                <span className="text-sm text-muted-foreground flex items-center gap-1">
+              <>
+                <span className="flex items-center gap-1 text-sm text-muted-foreground max-w-[140px] truncate">
                   {isAdmin && <Shield className="w-4 h-4 text-secondary" />}
                   <User className="w-4 h-4" />
                   {user.email?.split("@")[0]}
@@ -73,16 +60,15 @@ export function Navbar() {
                   variant="outline"
                   size="sm"
                   onClick={handleSignOut}
-                  className="gap-1"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4 mr-1" />
                   Logout
                 </Button>
-              </div>
+              </>
             ) : (
-              <Button asChild variant="orange" size="sm" className="ml-2 gap-1">
+              <Button asChild variant="orange" size="sm">
                 <Link to="/auth">
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-4 h-4 mr-1" />
                   Login
                 </Link>
               </Button>
@@ -93,68 +79,83 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="md:hidden"
             onClick={() => setIsOpen(!isOpen)}
           >
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isOpen ? <X /> : <Menu />}
           </Button>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* ================= BOTTOM ROW (DESKTOP NAV) ================= */}
+        <nav className="hidden md:flex h-12 items-center justify-center gap-6 bg-muted/40">
+
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition ${
+                location.pathname === link.path
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-accent"
+              }`}
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
+
+        {/* ================= MOBILE NAV ================= */}
         {isOpen && (
-          <div className="lg:hidden py-4 border-t border-border">
-            <div className="flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`px-4 py-3 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname === link.path
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-accent"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              
-              {/* Mobile Auth */}
-              <div className="pt-2 border-t border-border mt-2">
-                {user ? (
-                  <div className="flex flex-col gap-2">
-                    <span className="px-4 text-sm text-muted-foreground flex items-center gap-1">
-                      {isAdmin && <Shield className="w-4 h-4 text-secondary" />}
-                      <User className="w-4 h-4" />
-                      {user.email}
-                    </span>
-                    <Button
-                      variant="outline"
-                      onClick={handleSignOut}
-                      className="mx-4 gap-1"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </Button>
+          <div className="md:hidden border-t py-4 space-y-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-3 rounded-md text-sm font-medium ${
+                  location.pathname === link.path
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+
+            <div className="pt-4 mt-4 border-t">
+              {user ? (
+                <div className="px-4 space-y-3">
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    {isAdmin && <Shield className="w-4 h-4 text-secondary" />}
+                    <User className="w-4 h-4" />
+                    {user.email}
                   </div>
-                ) : (
                   <Button
-                    asChild
-                    variant="orange"
-                    className="mx-4 gap-1"
-                    onClick={() => setIsOpen(false)}
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleSignOut}
                   >
-                    <Link to="/auth">
-                      <LogIn className="w-4 h-4" />
-                      Login / Sign Up
-                    </Link>
+                    <LogOut className="w-4 h-4 mr-1" />
+                    Logout
                   </Button>
-                )}
-              </div>
+                </div>
+              ) : (
+                <Button
+                  asChild
+                  variant="orange"
+                  className="mx-4"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Link to="/auth">
+                    <LogIn className="w-4 h-4 mr-1" />
+                    Login / Sign Up
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         )}
       </div>
-    </nav>
+    </header>
   );
 }
