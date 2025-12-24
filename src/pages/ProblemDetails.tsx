@@ -22,32 +22,72 @@ export default function ProblemDetails() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchProblem = async () => {
       if (!id) return;
 
       setLoading(true);
       setError(null);
 
-      // Try to match by problem_statement_id first, then by uuid
-      const { data, error: fetchError } = await supabase
+      // Fetch by public-facing problem_statement_id first (e.g. "25001")
+      const byCode = await supabase
         .from("problem_statements")
         .select("*")
-        .or(`problem_statement_id.eq.${id},id.eq.${id}`)
+        .eq("problem_statement_id", id)
         .maybeSingle();
 
-      if (fetchError) {
-        console.error("Error fetching problem:", fetchError);
+      if (cancelled) return;
+
+      if (byCode.error) {
         setError("Failed to load problem statement.");
-      } else if (!data) {
-        setError("Problem statement not found.");
-      } else {
-        setProblem(data);
+        setLoading(false);
+        return;
       }
 
+      if (byCode.data) {
+        setProblem(byCode.data);
+        setLoading(false);
+        return;
+      }
+
+      // Only attempt UUID lookup when the route param is a valid UUID.
+      // This avoids PostgREST errors like: invalid input syntax for type uuid: "25001"
+      const isUuid =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          id
+        );
+
+      if (isUuid) {
+        const byUuid = await supabase
+          .from("problem_statements")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (cancelled) return;
+
+        if (byUuid.error) {
+          setError("Failed to load problem statement.");
+        } else if (!byUuid.data) {
+          setError("Problem statement not found.");
+        } else {
+          setProblem(byUuid.data);
+        }
+
+        setLoading(false);
+        return;
+      }
+
+      setError("Problem statement not found.");
       setLoading(false);
     };
 
     fetchProblem();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const getThemeColor = (theme: string) => {
