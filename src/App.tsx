@@ -29,14 +29,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/problems" element={<Problems />} />
-            <Route
-              path="/problems/:id"
-              element={
-                <ProtectedRoute>
-                  <ProblemDetails />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/problems/:id" element={<ProblemDetails />} />
             <Route path="/event-structure" element={<EventStructure />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/registration" element={<Registration />} />
