@@ -9,15 +9,29 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 
+// Email validation function for GCET domain
+const validateGcetEmail = (email: string) => {
+  const gcetEmailRegex = /^[a-zA-Z0-9._%+-]+@gcet\.edu\.in$/;
+  return gcetEmailRegex.test(email);
+};
+
 // Validation schemas
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string()
+    .email("Please enter a valid email address")
+    .refine(validateGcetEmail, {
+      message: "Only GCET college email IDs are allowed for registration.",
+    }),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string()
+    .email("Please enter a valid email address")
+    .refine(validateGcetEmail, {
+      message: "Only GCET college email IDs are allowed for registration.",
+    }),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {

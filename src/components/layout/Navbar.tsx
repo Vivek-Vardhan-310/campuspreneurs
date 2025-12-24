@@ -14,11 +14,13 @@ export function Navbar() {
   // Dynamic nav links based on admin status
   const navLinks = [
     { name: "Home", path: "/" },
+    { name: "About Us", path: "/about" },
+    { name: "Events", path: "/events" },
     { name: "Problem Statements", path: "/problems" },
     { name: "Event Structure", path: "/event-structure" },
     { name: "Resources", path: "/resources" },
     // Show Dashboard for admins, Registration for regular users
-    isAdmin 
+    isAdmin
       ? { name: "Dashboard", path: "/admin" }
       : { name: "Registration", path: "/registration" },
     { name: "Contact", path: "/contact" },

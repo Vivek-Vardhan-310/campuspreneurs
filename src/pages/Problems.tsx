@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { ProblemFormDialog } from "@/components/admin/ProblemFormDialog";
 import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const themes = [
@@ -56,6 +57,10 @@ export default function Problems() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState<ProblemStatement | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Modal state
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsProblem, setDetailsProblem] = useState<ProblemStatement | null>(null);
 
   const fetchProblems = async () => {
     setLoading(true);
@@ -142,6 +147,11 @@ export default function Problems() {
   const openCreateDialog = () => {
     setSelectedProblem(null);
     setFormOpen(true);
+  };
+
+  const openModal = (problem: ProblemStatement) => {
+    setDetailsProblem(problem);
+    setDetailsOpen(true);
   };
 
   const filteredProblems = problems.filter((problem) => {
@@ -373,11 +383,13 @@ export default function Problems() {
                             </Button>
                           </>
                         )}
-                        <Button asChild size="sm" variant="orange">
-                          <Link to={`/problems/${problem.problem_statement_id}`}>
-                            View Details
-                            <ArrowRight className="w-4 h-4 ml-1" />
-                          </Link>
+                        <Button
+                          size="sm"
+                          variant="orange"
+                          onClick={() => openModal(problem)}
+                        >
+                          View Details
+                          <ArrowRight className="w-4 h-4 ml-1" />
                         </Button>
                       </div>
                     </div>
@@ -450,6 +462,83 @@ export default function Problems() {
         description={`Are you sure you want to delete "${selectedProblem?.title}"? This action cannot be undone.`}
         loading={saving}
       />
+
+      {/* Problem Details Modal */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          {detailsProblem && (
+            <>
+              {/* Header */}
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold">
+                  Problem Statement Details
+                </DialogTitle>
+              </DialogHeader>
+
+              {/* Table */}
+              <div className="mt-6 border border-border rounded-xl overflow-hidden">
+                <table className="w-full border-collapse">
+                  <tbody>
+                    {/* ID */}
+                    <tr className="border-b">
+                      <td className="w-1/3 bg-muted px-4 py-3 font-medium">
+                        Problem Statement ID
+                      </td>
+                      <td className="px-4 py-3 font-semibold">
+                        {detailsProblem.problem_statement_id}
+                      </td>
+                    </tr>
+
+                    {/* Title */}
+                    <tr className="border-b">
+                      <td className="bg-muted px-4 py-3 font-medium">
+                        Problem Statement Title
+                      </td>
+                      <td className="px-4 py-3">
+                        {detailsProblem.title}
+                      </td>
+                    </tr>
+
+                    {/* Description */}
+                    <tr className="border-b align-top">
+                      <td className="bg-muted px-4 py-3 font-medium">
+                        Description
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-pre-line">
+                        {detailsProblem.description}
+                      </td>
+                    </tr>
+
+                    {/* Category */}
+                    <tr className="border-b">
+                      <td className="bg-muted px-4 py-3 font-medium">
+                        Category
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex px-3 py-1 rounded-full text-sm bg-secondary text-secondary-foreground">
+                          {detailsProblem.category}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Theme */}
+                    <tr>
+                      <td className="bg-muted px-4 py-3 font-medium">
+                        Theme
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex px-3 py-1 rounded-full text-sm bg-primary text-primary-foreground">
+                          {detailsProblem.theme}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
