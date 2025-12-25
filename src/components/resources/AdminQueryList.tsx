@@ -14,6 +14,10 @@ interface UserQuery {
   status: string;
   resolved_at: string | null;
   created_at: string;
+  user_profile?: {
+    name: string | null;
+    email: string;
+  } | null;
 }
 
 export function AdminQueryList() {
@@ -31,7 +35,26 @@ export function AdminQueryList() {
       console.error("Error fetching queries:", error);
       toast.error("Failed to load queries");
     } else {
-      setQueries(data || []);
+      // Fetch profile information for queries with user_id
+      const queriesWithProfiles = await Promise.all(
+        (data || []).map(async (query) => {
+          if (query.user_id) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("name, email")
+              .eq("id", query.user_id)
+              .single();
+
+            return {
+              ...query,
+              user_profile: profile || null,
+            };
+          }
+          return query;
+        })
+      );
+
+      setQueries(queriesWithProfiles);
     }
     setLoading(false);
   };
@@ -113,7 +136,7 @@ export function AdminQueryList() {
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <User className="w-3.5 h-3.5" />
-                    {query.user_name || "Anonymous"}
+                    {query.user_profile?.name || query.user_name || "Anonymous"}
                   </span>
                   {query.user_email && (
                     <span className="flex items-center gap-1">
