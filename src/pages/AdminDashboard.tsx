@@ -60,6 +60,7 @@ export default function AdminDashboard() {
   const [themeFilter, setThemeFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [problemStatsFilter, setProblemStatsFilter] = useState<string>("all");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -280,24 +281,45 @@ export default function AdminDashboard() {
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-4">
                     {problemStats.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-border">
-                              <th className="text-left py-2 px-4 font-medium text-foreground">Problem Title</th>
-                              <th className="text-right py-2 px-4 font-medium text-foreground">Registered Teams</th>
-                            </tr>
-                          </thead>
-                          <tbody>
+                      <>
+                        {/* Filter Control */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-foreground mb-2">
+                            Filter by Problem Statement
+                          </label>
+                          <select
+                            value={problemStatsFilter}
+                            onChange={(e) => setProblemStatsFilter(e.target.value)}
+                            className="w-full max-w-xs px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                          >
+                            <option value="all">All Problems</option>
                             {problemStats.map((problem) => (
-                              <tr key={problem.id} className="border-b border-border/50">
-                                <td className="py-3 px-4 text-foreground">{problem.title}</td>
-                                <td className="py-3 px-4 text-right font-semibold text-primary">{problem.count}</td>
-                              </tr>
+                              <option key={problem.id} value={problem.id}>
+                                {problem.title}
+                              </option>
                             ))}
-                          </tbody>
-                        </table>
-                      </div>
+                          </select>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-border">
+                                <th className="text-left py-2 px-4 font-medium text-foreground">Problem Title</th>
+                                <th className="text-right py-2 px-4 font-medium text-foreground">Registered Teams</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(problemStatsFilter === "all" ? problemStats : problemStats.filter(problem => problem.id === problemStatsFilter)).map((problem) => (
+                                <tr key={problem.id} className="border-b border-border/50">
+                                  <td className="py-3 px-4 text-foreground">{problem.title}</td>
+                                  <td className="py-3 px-4 text-right font-semibold text-primary">{problem.count}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
                     ) : (
                       <p className="text-muted-foreground">No registrations yet.</p>
                     )}
