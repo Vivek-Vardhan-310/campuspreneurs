@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Registration() {
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     teamName: "",
     member1Name: "",
@@ -29,14 +33,115 @@ export default function Registration() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select a file smaller than 10MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate form submission
-    setIsSubmitted(true);
-    toast({
-      title: "Registration Successful!",
-      description: "Your team has been registered for Campuspreneurs Chapter 1.",
-    });
+    setIsLoading(true);
+
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to register your team.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      let documentUrl = null;
+
+      // Upload file if selected
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+        const filePath = fileName;
+
+        const { error: uploadError } = await supabase.storage
+          .from("team-documents")
+          .upload(filePath, selectedFile);
+
+        if (uploadError) {
+          console.error(uploadError);
+          toast({
+            title: "Upload Failed",
+            description: uploadError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        documentUrl = filePath;
+      }
+
+      // Insert registration data
+      const { error: insertError } = await supabase
+        .from('team_registrations')
+        .insert({
+          user_id: user.id,
+          team_name: formData.teamName,
+          problem_id: formData.problemId,
+          member1_name: formData.member1Name,
+          member1_roll: formData.member1Roll,
+          member2_name: formData.member2Name,
+          member2_roll: formData.member2Roll,
+          member3_name: formData.member3Name,
+          member3_roll: formData.member3Roll,
+          member4_name: formData.member4Name,
+          member4_roll: formData.member4Roll,
+          year: formData.year,
+          department: formData.department,
+          phone: formData.phone,
+          email: formData.email,
+          document_url: documentUrl,
+        });
+
+      if (insertError) {
+        toast({
+          title: "Registration Failed",
+          description: "Failed to register team. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Success
+      setIsSubmitted(true);
+      toast({
+        title: "Registration Successful!",
+        description: "Your team has been registered for Campuspreneurs Chapter 1.",
+      });
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -272,16 +377,38 @@ export default function Registration() {
                   <p className="text-sm text-muted-foreground">
                     Accepted formats: PDF, PPT, PPTX (Max 10MB)
                   </p>
-                  <input type="file" className="hidden" accept=".pdf,.ppt,.pptx" />
-                  <Button variant="outline" className="mt-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.ppt,.pptx"
+                    onChange={handleFileChange}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4"
+                    onClick={handleFileButtonClick}
+                  >
                     Choose Files
                   </Button>
+                  {selectedFile && (
+                    <p className="text-sm text-foreground mt-2">
+                      Selected: {selectedFile.name}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Submit */}
-              <Button type="submit" variant="orange" size="xl" className="w-full">
-                Submit Registration
+              <Button
+                type="submit"
+                variant="orange"
+                size="xl"
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? "Submitting..." : "Submit Registration"}
               </Button>
             </div>
           </form>
