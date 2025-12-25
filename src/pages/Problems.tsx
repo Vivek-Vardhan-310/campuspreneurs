@@ -164,7 +164,9 @@ export default function Problems() {
     const matchesSearch =
       problem.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       problem.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      problem.problem_statement_id.toLowerCase().includes(searchQuery.toLowerCase());
+      problem.problem_statement_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      problem.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      problem.department.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTheme && matchesSearch;
   });
 
@@ -287,7 +289,7 @@ export default function Problems() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search by ID, title, or keyword..."
+                placeholder="Search by ID, title, category, department, or keyword..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
