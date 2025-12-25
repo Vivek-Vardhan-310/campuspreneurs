@@ -43,6 +43,7 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -147,11 +148,11 @@ export default function Auth() {
             });
           }
         } else {
+          setVerificationSent(true);
           toast({
-            title: "Account Created!",
-            description: "Welcome to Campuspreneurs! You are now logged in.",
+            title: "Verification Email Sent",
+            description: "Please check your email and click the verification link to complete your registration.",
           });
-          navigate("/");
         }
       }
     } catch (err) {
@@ -185,8 +186,55 @@ export default function Auth() {
               </p>
             </div>
 
-            {/* Form Card */}
-            <div className="bg-card rounded-xl border border-border p-6 shadow-card">
+            {/* Verification Sent Message */}
+            {verificationSent ? (
+              <div className="bg-card rounded-xl border border-border p-6 shadow-card text-center">
+                <div className="w-16 h-16 rounded-xl bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-poppins font-bold text-foreground mb-2">
+                  Check Your Email
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  We've sent a verification link to <strong>{formData.email}</strong>.
+                  Click the link in the email to complete your registration.
+                </p>
+                <div className="space-y-4">
+                  <Button
+                    onClick={() => setVerificationSent(false)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Back to Sign Up
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      const { error } = await signUp(formData.email, formData.password, formData.name);
+                      if (error) {
+                        toast({
+                          title: "Error",
+                          description: "Failed to resend verification email.",
+                          variant: "destructive",
+                        });
+                      } else {
+                        toast({
+                          title: "Verification Email Resent",
+                          description: "Please check your email again.",
+                        });
+                      }
+                    }}
+                    variant="default"
+                    className="w-full"
+                  >
+                    Resend Verification Email
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Form Card */
+              <div className="bg-card rounded-xl border border-border p-6 shadow-card">
               {/* Toggle Tabs */}
               <div className="flex rounded-lg bg-muted p-1 mb-6">
                 <button
@@ -312,18 +360,19 @@ export default function Auth() {
                 </Button>
               </form>
 
-              {/* Toggle Link */}
-              <p className="mt-6 text-center text-sm text-muted-foreground">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-primary hover:text-secondary font-medium"
-                >
-                  {isLogin ? "Sign up" : "Sign in"}
-                </button>
-              </p>
-            </div>
+                {/* Toggle Link */}
+                <p className="mt-6 text-center text-sm text-muted-foreground">
+                  {isLogin ? "Don't have an account? " : "Already have an account? "}
+                  <button
+                    type="button"
+                    onClick={() => setIsLogin(!isLogin)}
+                    className="text-primary hover:text-secondary font-medium"
+                  >
+                    {isLogin ? "Sign up" : "Sign in"}
+                  </button>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
