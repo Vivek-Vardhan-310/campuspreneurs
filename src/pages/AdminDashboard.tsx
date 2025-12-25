@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, FileText, Shield, TrendingUp } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface Stats {
   totalProblems: number;
@@ -334,15 +335,58 @@ export default function AdminDashboard() {
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-4">
                     {themeStats.length > 0 ? (
-                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {themeStats.map((theme) => (
-                          <div key={theme.theme} className="bg-muted/50 rounded-lg p-4">
-                            <h3 className="font-medium text-foreground capitalize">{theme.theme}</h3>
-                            <p className="text-2xl font-bold text-primary mt-1">{theme.count}</p>
-                            <p className="text-sm text-muted-foreground">teams registered</p>
+                      <>
+                        {/* Pie Chart */}
+                        <div className="mb-8">
+                          <div className="h-80 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={themeStats.map((theme, index) => ({
+                                    name: theme.theme.charAt(0).toUpperCase() + theme.theme.slice(1),
+                                    value: Math.max(theme.count, 0.1), // Ensure minimum value to prevent 0% slices
+                                    actualCount: theme.count,
+                                    fill: `hsl(${index * 137.5 % 360}, 70%, 50%)`
+                                  }))}
+                                  cx="50%"
+                                  cy="50%"
+                                  labelLine={false}
+                                  label={({ name, actualCount }) => {
+                                    const totalRegistrations = themeStats.reduce((sum, t) => sum + t.count, 0);
+                                    const percentage = totalRegistrations === 0 ? 0 : ((actualCount / totalRegistrations) * 100).toFixed(0);
+                                    return `${name} ${percentage}%`;
+                                  }}
+                                  outerRadius={80}
+                                  fill="#8884d8"
+                                  dataKey="value"
+                                >
+                                  {themeStats.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={`hsl(${index * 137.5 % 360}, 70%, 50%)`} />
+                                  ))}
+                                </Pie>
+                                <Tooltip
+                                  formatter={(value, name, props) => [
+                                    `${props.payload.actualCount} teams`,
+                                    name
+                                  ]}
+                                />
+                                <Legend />
+                              </PieChart>
+                            </ResponsiveContainer>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+
+                        {/* Theme Stats Grid */}
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {themeStats.map((theme) => (
+                            <div key={theme.theme} className="bg-muted/50 rounded-lg p-4">
+                              <h3 className="font-medium text-foreground capitalize">{theme.theme}</h3>
+                              <p className="text-2xl font-bold text-primary mt-1">{theme.count}</p>
+                              <p className="text-sm text-muted-foreground">teams registered</p>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     ) : (
                       <p className="text-muted-foreground">No registrations yet.</p>
                     )}
