@@ -182,9 +182,9 @@ export default function Problems() {
 
   const problemCounts = {
     All: problems.length,
-    Academic: problems.filter((p) => p.theme.toLowerCase() === "academic").length,
-    "Non-Academic": problems.filter((p) => p.theme.toLowerCase() === "non-academic").length,
-    "Community Innovation": problems.filter((p) => p.theme.toLowerCase() === "community").length,
+    Academic: problems.filter((p) => p.theme === "Academic").length,
+    "Non-Academic": problems.filter((p) => p.theme === "Non-Academic").length,
+    "Community Innovation": problems.filter((p) => p.theme === "Community Innovation").length,
   };
 
   return (
