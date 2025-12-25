@@ -427,24 +427,26 @@ export default function Problems() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 bg-primary">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-poppins font-bold text-primary-foreground mb-4">
-            Ready to Solve a Problem?
-          </h2>
-          <p className="text-primary-foreground/80 mb-6 max-w-xl mx-auto">
-            Register your team and start working on your innovative solution today.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button asChild variant="heroOutline" size="lg">
-              <Link to="/resources">Download Resources</Link>
-            </Button>
-            <Button asChild variant="orange" size="lg">
-              <Link to="/registration">Register Now</Link>
-            </Button>
+      {!isAdmin && (
+        <section className="py-12 bg-primary">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-2xl font-poppins font-bold text-primary-foreground mb-4">
+              Ready to Solve a Problem?
+            </h2>
+            <p className="text-primary-foreground/80 mb-6 max-w-xl mx-auto">
+              Register your team and start working on your innovative solution today.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button asChild variant="heroOutline" size="lg">
+                <Link to="/resources">Download Resources</Link>
+              </Button>
+              <Button asChild variant="orange" size="lg">
+                <Link to="/registration">Register Now</Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Admin Dialogs */}
       <ProblemFormDialog
