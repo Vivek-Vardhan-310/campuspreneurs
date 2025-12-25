@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, FileText, Shield, TrendingUp } from "lucide-react";
+import { Users, FileText, Shield, TrendingUp, Edit, Trash2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { Button } from "@/components/ui/button";
+import { TeamFormDialog } from "@/components/admin/TeamFormDialog";
+import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 
 interface Stats {
   totalProblems: number;
@@ -45,6 +48,12 @@ interface TeamRegistration {
   theme?: string;
 }
 
+interface ProblemStatement {
+  problem_statement_id: string;
+  title: string;
+  theme: string;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats>({
     totalProblems: 0,
@@ -62,6 +71,42 @@ export default function AdminDashboard() {
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [problemStatsFilter, setProblemStatsFilter] = useState<string>("all");
+  const [teamFormDialogOpen, setTeamFormDialogOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<TeamRegistration | null>(null);
+  const [deleteConfirmDialogOpen, setDeleteConfirmDialogOpen] = useState(false);
+  const [deleteAllConfirmDialogOpen, setDeleteAllConfirmDialogOpen] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<TeamRegistration | null>(null);
+  const [problems, setProblems] = useState<ProblemStatement[]>([]);
+
+  // Helper function to recalculate statistics
+  const recalculateStats = (teams: TeamRegistration[]) => {
+    // Recalculate problem stats
+    const problemCountMap = teams.reduce((acc, reg) => {
+      acc[reg.problem_id] = (acc[reg.problem_id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const problemStatsData = problems.map(p => ({
+      id: p.problem_statement_id,
+      title: p.title,
+      count: problemCountMap[p.problem_statement_id] || 0
+    }));
+
+    // Recalculate theme stats
+    const themeCountMap = problems.reduce((acc, p) => {
+      const count = problemCountMap[p.problem_statement_id] || 0;
+      acc[p.theme] = (acc[p.theme] || 0) + count;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const themeStatsData = Object.entries(themeCountMap).map(([theme, count]) => ({
+      theme,
+      count
+    }));
+
+    setProblemStats(problemStatsData);
+    setThemeStats(themeStatsData);
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -198,6 +243,101 @@ export default function AdminDashboard() {
 
     setFilteredTeams(filtered);
   }, [teamRegistrations, problemFilter, themeFilter, sortField, sortDirection]);
+
+  // Set problems state
+  useEffect(() => {
+    const fetchProblems = async () => {
+      const { data: problemsData, error } = await supabase
+        .from("problem_statements")
+        .select("problem_statement_id, title, theme")
+        .order("problem_statement_id", { ascending: true });
+
+      if (!error && problemsData) {
+        setProblems(problemsData);
+      }
+    };
+
+    fetchProblems();
+  }, []);
+
+  const handleEditTeam = (team: TeamRegistration) => {
+    setSelectedTeam(team);
+    setTeamFormDialogOpen(true);
+  };
+
+  const handleDeleteTeam = (team: TeamRegistration) => {
+    setTeamToDelete(team);
+    setDeleteConfirmDialogOpen(true);
+  };
+
+  const handleDeleteAllTeams = () => {
+    setDeleteAllConfirmDialogOpen(true);
+  };
+
+  const confirmDeleteTeam = async () => {
+    if (!teamToDelete) return;
+
+    try {
+      const { error } = await (supabase as any).from("team_registrations").delete().eq("id", teamToDelete.id);
+
+      if (error) throw error;
+
+      const updatedTeams = teamRegistrations.filter(team => team.id !== teamToDelete.id);
+      setTeamRegistrations(updatedTeams);
+      recalculateStats(updatedTeams);
+      setDeleteConfirmDialogOpen(false);
+      setTeamToDelete(null);
+    } catch (error) {
+      console.error("Error deleting team:", error);
+    }
+  };
+
+  const confirmDeleteAllTeams = async () => {
+    try {
+      const { error } = await (supabase as any).from("team_registrations").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (error) throw error;
+
+      setTeamRegistrations([]);
+      recalculateStats([]);
+      setDeleteAllConfirmDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting all teams:", error);
+    }
+  };
+
+  const handleSaveTeam = async (data: Omit<TeamRegistration, "id" | "created_at" | "problem_title" | "theme">) => {
+    try {
+      if (selectedTeam) {
+        // Update existing team
+        const { error } = await (supabase as any)
+          .from("team_registrations")
+          .update(data)
+          .eq("id", selectedTeam.id);
+
+        if (error) throw error;
+
+        // Update local state
+        const updatedTeams = teamRegistrations.map(team =>
+          team.id === selectedTeam.id
+            ? {
+                ...team,
+                ...data,
+                problem_title: problems.find(p => p.problem_statement_id === data.problem_id)?.title || "Unknown Problem",
+                theme: problems.find(p => p.problem_statement_id === data.problem_id)?.theme || "Unknown Theme"
+              }
+            : team
+        );
+        setTeamRegistrations(updatedTeams);
+        recalculateStats(updatedTeams);
+      }
+
+      setTeamFormDialogOpen(false);
+      setSelectedTeam(null);
+    } catch (error) {
+      console.error("Error saving team:", error);
+    }
+  };
 
   const statCards = [
     {
@@ -479,6 +619,7 @@ export default function AdminDashboard() {
                               <th className="text-left py-2 px-4 font-medium text-foreground">Department</th>
                               <th className="text-left py-2 px-4 font-medium text-foreground">Contact</th>
                               <th className="text-left py-2 px-4 font-medium text-foreground">Registered</th>
+                              <th className="text-left py-2 px-4 font-medium text-foreground">Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -504,6 +645,26 @@ export default function AdminDashboard() {
                                 </td>
                                 <td className="py-3 px-4 text-foreground text-sm">
                                   {new Date(team.created_at).toLocaleDateString()}
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleEditTeam(team)}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleDeleteTeam(team)}
+                                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -548,8 +709,43 @@ export default function AdminDashboard() {
                     <h3 className="font-semibold text-foreground">Manage Resources</h3>
                     <p className="text-sm text-muted-foreground">Upload and update documents</p>
                   </a>
+                  <Button
+                    onClick={handleDeleteAllTeams}
+                    variant="destructive"
+                    className="p-4 h-auto flex flex-col items-start"
+                  >
+                    <Trash2 className="w-6 h-6 mb-2" />
+                    <h3 className="font-semibold">Delete All Teams</h3>
+                    <p className="text-sm text-left">Remove all team registrations</p>
+                  </Button>
                 </div>
               </div>
+
+              {/* Dialogs */}
+              <TeamFormDialog
+                open={teamFormDialogOpen}
+                onOpenChange={setTeamFormDialogOpen}
+                team={selectedTeam}
+                problems={problems}
+                onSave={handleSaveTeam}
+                loading={loading}
+              />
+
+              <DeleteConfirmDialog
+                open={deleteConfirmDialogOpen}
+                onOpenChange={setDeleteConfirmDialogOpen}
+                onConfirm={confirmDeleteTeam}
+                title="Delete Team"
+                description={`Are you sure you want to delete the team "${teamToDelete?.team_name}"? This action cannot be undone.`}
+              />
+
+              <DeleteConfirmDialog
+                open={deleteAllConfirmDialogOpen}
+                onOpenChange={setDeleteAllConfirmDialogOpen}
+                onConfirm={confirmDeleteAllTeams}
+                title="Delete All Teams"
+                description="Are you sure you want to delete all team registrations? This action cannot be undone."
+              />
             </>
           )}
         </div>
