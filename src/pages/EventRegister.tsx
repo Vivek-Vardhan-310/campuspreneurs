@@ -25,14 +25,12 @@ export default function EventRegister() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+  if (!user || !eventId) return;
 
-    fetchEvent();
-    checkRegistration();
-  }, [user]);
+  fetchEvent();
+  checkRegistration();
+}, [user, eventId]);
+
 
   const fetchEvent = async () => {
     const { data } = await supabase
@@ -46,14 +44,37 @@ export default function EventRegister() {
   };
 
   const checkRegistration = async () => {
-    const { data } = await supabase
-      .from("event_registrations")
-      .select("id")
-      .eq("event_id", eventId)
-      .eq("user_id", user?.id)
-      .single();
+    console.log("Checking registration for eventId:", eventId, "userId:", user?.id);
+    try {
+      // First, let's check if the table exists and get all records for this user
+      const { data: allUserRegistrations, error: fetchError } = await supabase
+        .from("event_registrations")
+        .select("*")
+        .eq("user_id", user?.id);
 
-    if (data) setAlreadyRegistered(true);
+      console.log("All user registrations:", allUserRegistrations, "error:", fetchError);
+
+      // Then check specifically for this event
+      const { data, error } = await supabase
+        .from("event_registrations")
+        .select("id")
+        .eq("event_id", eventId)
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      console.log("Specific event registration check - data:", data, "error:", error);
+
+      if (error) {
+        console.error("Error checking registration:", error);
+        setAlreadyRegistered(false);
+      } else {
+        setAlreadyRegistered(!!data);
+        console.log("Already registered set to:", !!data);
+      }
+    } catch (err) {
+      console.error("Unexpected error in checkRegistration:", err);
+      setAlreadyRegistered(false);
+    }
   };
 
   const handleRegister = async () => {
