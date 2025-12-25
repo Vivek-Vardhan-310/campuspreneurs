@@ -36,6 +36,7 @@ export function ProblemFormDialog({
     description: "",
     category: "",
     theme: "",
+    department: "",
   });
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export function ProblemFormDialog({
         description: problem.description,
         category: problem.category,
         theme: problem.theme,
+        department: problem.department || "",
       });
     } else {
       setFormData({
@@ -54,6 +56,7 @@ export function ProblemFormDialog({
         description: "",
         category: "",
         theme: "",
+        department: "",
       });
     }
   }, [problem, open]);
@@ -132,6 +135,27 @@ export function ProblemFormDialog({
                 <SelectItem value="Academic">Academic</SelectItem>
                 <SelectItem value="Non-Academic">Non-Academic</SelectItem>
                 <SelectItem value="Community Innovation">Community Innovation</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="department">Department</Label>
+            <Select
+              value={formData.department}
+              onValueChange={(value) => setFormData({ ...formData, department: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Computer Science">Computer Science</SelectItem>
+                <SelectItem value="Information Technology">Information Technology</SelectItem>
+                <SelectItem value="Electronics">Electronics</SelectItem>
+                <SelectItem value="Mechanical">Mechanical</SelectItem>
+                <SelectItem value="Civil">Civil</SelectItem>
+                <SelectItem value="Electrical">Electrical</SelectItem>
+                <SelectItem value="Business Administration">Business Administration</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>

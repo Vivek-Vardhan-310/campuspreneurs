@@ -41,6 +41,7 @@ interface ProblemStatement {
   description: string;
   category: string;
   theme: string;
+  department: string;
   created_at: string;
 }
 
@@ -353,6 +354,9 @@ export default function Problems() {
                           <span className="bg-muted px-3 py-1 rounded-full text-xs font-medium text-muted-foreground">
                             {problem.category}
                           </span>
+                          <span className="bg-accent px-3 py-1 rounded-full text-xs font-medium text-accent-foreground">
+                            {problem.department || "Not specified"}
+                          </span>
                         </div>
 
                         <h3 className="font-poppins font-semibold text-lg text-foreground mb-2">
@@ -528,13 +532,25 @@ export default function Problems() {
                     </tr>
 
                     {/* Theme */}
-                    <tr>
+                    <tr className="border-b">
                       <td className="bg-muted px-4 py-3 font-medium">
                         Theme
                       </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex px-3 py-1 rounded-full text-sm bg-primary text-primary-foreground">
                           {detailsProblem.theme}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Department */}
+                    <tr>
+                      <td className="bg-muted px-4 py-3 font-medium">
+                        Department
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex px-3 py-1 rounded-full text-sm bg-accent text-accent-foreground">
+                          {detailsProblem.department || "Not specified"}
                         </span>
                       </td>
                     </tr>
