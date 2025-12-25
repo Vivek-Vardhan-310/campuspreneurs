@@ -172,13 +172,15 @@ export default function Resources() {
       )}
 
       {/* User Query Submission */}
-      <section className="py-16 lg:py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <QuerySubmissionForm />
+      {!isAdmin && (
+        <section className="py-16 lg:py-24 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl mx-auto">
+              <QuerySubmissionForm />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQ */}
       <section className="py-16 lg:py-24 bg-muted">
