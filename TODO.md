@@ -1,21 +1,9 @@
-# TODO List for Events Page Implementation
+# TODO: Display All Registered Teams Details
 
-## Completed Tasks
-- [x] Created migration for events table (supabase/migrations/20251224145423_create_events_table.sql)
-- [x] Added import for Events component in App.tsx
-- [x] Added route "/events" in App.tsx pointing to Events component
-- [x] Created src/pages/Events.tsx with event list display
-- [x] Updated EventsCarousel.tsx to add navigation to "/events" on "Learn More" button
-- [x] Generated updated Supabase types to include events table
+## Tasks
 
-## Remaining Tasks
-- [ ] Push the migration to apply the events table to the database
-- [ ] Test the "Learn More" button navigation to events page
-- [ ] Verify events page displays correctly without 404 error
-- [ ] Consider adding individual event details page if needed (currently navigates to /events/${id} which doesn't exist)
-- [ ] Add sample events data to the database for testing
-
-## Notes
-- The Events.tsx currently shows a list of events with "View Details" buttons that navigate to /events/${id}, but no route exists for individual event details.
-- If the events page should show full event details instead of a list, the Events.tsx component needs to be modified.
-- Migration needs to be pushed: `npx supabase db push`
+- [ ] Add state for storing team registrations data
+- [ ] Modify fetchStats function to fetch all team registrations with problem details
+- [ ] Add new AccordionItem for "All Registered Teams" in the AdminDashboard
+- [ ] Create a table to display team details including team name, problem title, members, contact info, etc.
+- [ ] Ensure proper loading and error handling for the new data fetch
