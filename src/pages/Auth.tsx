@@ -114,7 +114,9 @@ export default function Auth() {
             title: "Welcome back!",
             description: "You have successfully logged in.",
           });
-          navigate("/");
+          const redirectUrl = localStorage.getItem('redirectAfterLogin') || '/';
+          localStorage.removeItem('redirectAfterLogin');
+          navigate(redirectUrl);
         }
       } else {
         // Validate signup

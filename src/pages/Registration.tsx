@@ -1,16 +1,24 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Registration() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [phoneError, setPhoneError] = useState<string>("");
+  const [problemIdError, setProblemIdError] = useState<string>("");
+  const [resolvedProblemUuid, setResolvedProblemUuid] = useState<string | null>(null);
+  const [isValidatingProblemId, setIsValidatingProblemId] = useState(false);
   const [formData, setFormData] = useState({
     teamName: "",
     member1Name: "",
@@ -28,9 +36,53 @@ export default function Registration() {
     problemId: "",
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // No need to fetch problem IDs on mount anymore - validation is done on-demand
+
+  // Validation functions
+  const validatePhone = (phone: string): string => {
+    if (!phone) return "";
+    if (!/^\d+$/.test(phone)) return "Phone number must contain only numeric digits.";
+    if (phone.length !== 10) return "Phone number must be exactly 10 digits.";
+    if (!/^[6-9]/.test(phone)) return "Phone number must start with 6, 7, 8, or 9.";
+    return "";
+  };
+
+  const validateAndResolveProblemId = async (problemId: string): Promise<{ error: string; uuid: string | null }> => {
+    if (!problemId) return { error: "", uuid: null };
+
+    try {
+      const { data, error } = await supabase
+        .from('problem_statements')
+        .select('id')
+        .eq('problem_statement_id', problemId)
+        .single();
+
+      if (error || !data) {
+        return { error: "Invalid Problem ID", uuid: null };
+      }
+
+      return { error: "", uuid: data.id };
+    } catch (error) {
+      console.error('Error validating problem ID:', error);
+      return { error: "Invalid Problem ID", uuid: null };
+    }
+  };
+
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Real-time validation
+    if (name === "phone") {
+      const error = validatePhone(value);
+      setPhoneError(error);
+    } else if (name === "problemId") {
+      setIsValidatingProblemId(true);
+      const { error, uuid } = await validateAndResolveProblemId(value);
+      setProblemIdError(error);
+      setResolvedProblemUuid(uuid);
+      setIsValidatingProblemId(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,8 +105,35 @@ export default function Registration() {
     fileInputRef.current?.click();
   };
 
+  const handleLoginRedirect = () => {
+    localStorage.setItem('redirectAfterLogin', '/registration');
+    navigate('/auth');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate before submission
+    const phoneErr = validatePhone(formData.phone);
+    let problemIdErr = "";
+    let resolvedUuid = resolvedProblemUuid;
+
+    // If we don't have a resolved UUID, try to validate and resolve it now
+    if (!resolvedUuid && formData.problemId) {
+      const { error, uuid } = await validateAndResolveProblemId(formData.problemId);
+      problemIdErr = error;
+      resolvedUuid = uuid;
+    } else if (!resolvedUuid) {
+      problemIdErr = "Invalid Problem ID";
+    }
+
+    setPhoneError(phoneErr);
+    setProblemIdError(problemIdErr);
+
+    if (phoneErr || problemIdErr || !resolvedUuid) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -101,7 +180,7 @@ export default function Registration() {
         .insert({
           user_id: user.id,
           team_name: formData.teamName,
-          problem_id: formData.problemId,
+          problem_id: resolvedUuid,
           member1_name: formData.member1Name,
           member1_roll: formData.member1Roll,
           member2_name: formData.member2Name || null,
@@ -192,8 +271,15 @@ export default function Registration() {
       {/* Form */}
       <section className="py-16 lg:py-24 bg-background">
         <div className="container mx-auto px-4">
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
+          <form onSubmit={user ? handleSubmit : (e) => e.preventDefault()} className="max-w-2xl mx-auto">
             <div className="bg-card rounded-2xl shadow-card p-8 space-y-8">
+              {!user && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <p className="text-yellow-800 font-medium">
+                    You must be logged in to register for this event.
+                  </p>
+                </div>
+              )}
               {/* Team Info */}
               <div>
                 <h3 className="font-poppins font-semibold text-lg text-foreground border-b border-border pb-3 mb-6">
@@ -210,7 +296,8 @@ export default function Registration() {
                       required
                       value={formData.teamName}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      disabled={!user}
+                      className={`w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                       placeholder="Enter your team name"
                     />
                   </div>
@@ -235,7 +322,8 @@ export default function Registration() {
                           required
                           value={formData[`member${num}Name` as keyof typeof formData]}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                          disabled={!user}
+                          className={`w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                           placeholder="Full name"
                         />
                       </div>
@@ -249,7 +337,8 @@ export default function Registration() {
                           required
                           value={formData[`member${num}Roll` as keyof typeof formData]}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                          disabled={!user}
+                          className={`w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                           placeholder="Roll number"
                         />
                       </div>
@@ -273,7 +362,8 @@ export default function Registration() {
                       required
                       value={formData.year}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      disabled={!user}
+                      className={`w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Select Year</option>
                       <option value="1">1st Year</option>
@@ -291,7 +381,8 @@ export default function Registration() {
                       required
                       value={formData.department}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      disabled={!user}
+                      className={`w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Select Department</option>
                       <option value="AIML">AIML</option>
@@ -323,9 +414,15 @@ export default function Registration() {
                       required
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      disabled={!user}
+                      className={`w-full px-4 py-3 rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
+                        phoneError ? "border-red-500" : "border-input"
+                      } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                       placeholder="10-digit mobile number"
                     />
+                    {phoneError && (
+                      <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
@@ -337,7 +434,8 @@ export default function Registration() {
                       required
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      disabled={!user}
+                      className={`w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                       placeholder="Team contact email"
                     />
                   </div>
@@ -359,9 +457,15 @@ export default function Registration() {
                     required
                     value={formData.problemId}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    disabled={!user}
+                    className={`w-full px-4 py-3 rounded-lg border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
+                      problemIdError ? "border-red-500" : "border-input"
+                    } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                     placeholder="Enter problem ID (e.g., PS001)"
                   />
+                  {problemIdError && (
+                    <p className="text-red-500 text-sm mt-1">{problemIdError}</p>
+                  )}
                 </div>
               </div>
 
@@ -390,6 +494,7 @@ export default function Registration() {
                     variant="outline"
                     className="mt-4"
                     onClick={handleFileButtonClick}
+                    disabled={!user}
                   >
                     Choose Files
                   </Button>
@@ -402,15 +507,27 @@ export default function Registration() {
               </div>
 
               {/* Submit */}
-              <Button
-                type="submit"
-                variant="orange"
-                size="xl"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? "Submitting..." : "Submit Registration"}
-              </Button>
+              {user ? (
+                <Button
+                  type="submit"
+                  variant="orange"
+                  size="xl"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Submitting..." : "Submit Registration"}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="orange"
+                  size="xl"
+                  className="w-full"
+                  onClick={handleLoginRedirect}
+                >
+                  Login to Register
+                </Button>
+              )}
             </div>
           </form>
         </div>
