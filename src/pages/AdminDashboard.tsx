@@ -280,10 +280,35 @@ export default function AdminDashboard() {
     if (!teamToDelete) return;
 
     try {
+      console.log("Deleting team:", teamToDelete.team_name);
+      console.log("Document URL to delete:", teamToDelete.document_url);
+
+      // Delete associated document from storage if it exists
+      if (teamToDelete.document_url) {
+        try {
+          const { error: storageError } = await supabase.storage
+            .from("team-documents")
+            .remove([teamToDelete.document_url]);
+
+          if (storageError) {
+            console.error("Error deleting document from storage:", storageError);
+            // Continue with team deletion even if document deletion fails
+          }
+        } catch (error) {
+          console.error("Error deleting document:", error);
+          // Continue with team deletion even if document deletion fails
+        }
+      }
+
+      console.log("Deleting team record from database...");
       const { error } = await (supabase as any).from("team_registrations").delete().eq("id", teamToDelete.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting team from database:", error);
+        throw error;
+      }
 
+      console.log("Team deleted successfully");
       const updatedTeams = teamRegistrations.filter(team => team.id !== teamToDelete.id);
       setTeamRegistrations(updatedTeams);
       recalculateStats(updatedTeams);
@@ -296,6 +321,40 @@ export default function AdminDashboard() {
 
   const confirmDeleteAllTeams = async () => {
     try {
+      // First, fetch all teams to get their document URLs
+      const { data: allTeams, error: fetchError } = await (supabase as any)
+        .from("team_registrations")
+        .select("document_url");
+
+      if (fetchError) {
+        console.error("Error fetching teams for deletion:", fetchError);
+        throw fetchError;
+      }
+
+      // Delete associated documents from storage
+      if (allTeams && allTeams.length > 0) {
+        const documentUrls = allTeams
+          .filter((team: any) => team.document_url)
+          .map((team: any) => team.document_url);
+
+        if (documentUrls.length > 0) {
+          try {
+            const { error: storageError } = await supabase.storage
+              .from("team-documents")
+              .remove(documentUrls);
+
+            if (storageError) {
+              console.error("Error deleting documents from storage:", storageError);
+              // Continue with team deletion even if document deletion fails
+            }
+          } catch (error) {
+            console.error("Error deleting documents:", error);
+            // Continue with team deletion even if document deletion fails
+          }
+        }
+      }
+
+      // Delete all team records from database
       const { error } = await (supabase as any).from("team_registrations").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
       if (error) throw error;
