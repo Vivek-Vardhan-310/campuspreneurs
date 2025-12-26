@@ -49,6 +49,7 @@ export function EventFormDialog({
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [minDate, setMinDate] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatDateForInput = (dateString: string) => {
@@ -64,7 +65,25 @@ export function EventFormDialog({
   };
 
   useEffect(() => {
+    const now = new Date();
+    let minDateValue = "";
+
     if (event) {
+      // For editing existing events
+      const eventDate = new Date(event.event_date);
+      if (eventDate < now) {
+        // If event is in the past, prevent making it earlier
+        minDateValue = formatDateForInput(event.event_date);
+      } else {
+        // If event is in the future, prevent making it past
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        minDateValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+
       setFormData({
         title: event.title,
         description: event.description,
@@ -76,6 +95,14 @@ export function EventFormDialog({
         image_url: event.image_url || "",
       });
     } else {
+      // For adding new events, set min date to now
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      minDateValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+
       setFormData({
         title: "",
         description: "",
@@ -87,6 +114,8 @@ export function EventFormDialog({
         image_url: "",
       });
     }
+
+    setMinDate(minDateValue);
     setImageFile(null);
   }, [event, open]);
 
@@ -98,6 +127,13 @@ export function EventFormDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate event date
+    if (formData.event_date < minDate) {
+      toast.error("Event date and time cannot be in the past. Please select a future date and time.");
+      return;
+    }
+
     setUploading(true);
 
     try {
@@ -167,6 +203,7 @@ export function EventFormDialog({
               type="datetime-local"
               value={formData.event_date}
               onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
+              min={minDate}
               required
             />
           </div>
