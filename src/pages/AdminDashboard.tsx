@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
-<<<<<<< HEAD
-import { Users, FileText, Shield, TrendingUp, Edit, Trash2, Eye, Download } from "lucide-react";
-=======
-import { Users, FileText, Shield, TrendingUp, Edit, Trash2, Calendar } from "lucide-react";
->>>>>>> b4f341bfa13a52c5d519c6ca66258eef7902c23e
+import { Users, FileText, Shield, TrendingUp, Edit, Trash2, Eye, Download, Calendar } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
