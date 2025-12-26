@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
+<<<<<<< HEAD
 import { Users, FileText, Shield, TrendingUp, Edit, Trash2, Eye, Download } from "lucide-react";
+=======
+import { Users, FileText, Shield, TrendingUp, Edit, Trash2, Calendar } from "lucide-react";
+>>>>>>> b4f341bfa13a52c5d519c6ca66258eef7902c23e
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -762,6 +766,14 @@ export default function AdminDashboard() {
                     <FileText className="w-6 h-6 text-secondary mb-2" />
                     <h3 className="font-semibold text-foreground">Manage Problems</h3>
                     <p className="text-sm text-muted-foreground">Add, edit or delete problem statements</p>
+                  </a>
+                  <a
+                    href="/events"
+                    className="p-4 rounded-lg border border-border hover:border-secondary hover:bg-accent/50 transition-all"
+                  >
+                    <Calendar className="w-6 h-6 text-secondary mb-2" />
+                    <h3 className="font-semibold text-foreground">Manage Events</h3>
+                    <p className="text-sm text-muted-foreground">Add, edit or delete events</p>
                   </a>
                   <a
                     href="/event-structure"
