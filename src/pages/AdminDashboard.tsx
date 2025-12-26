@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { supabase } from "@/integrations/supabase/client";
+<<<<<<< HEAD
+import { Users, FileText, Shield, TrendingUp, Edit, Trash2, Eye, Download } from "lucide-react";
+=======
 import { Users, FileText, Shield, TrendingUp, Edit, Trash2, Calendar } from "lucide-react";
+>>>>>>> b4f341bfa13a52c5d519c6ca66258eef7902c23e
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -43,6 +47,7 @@ interface TeamRegistration {
   phone: string;
   email: string;
   document_url?: string;
+  document_filename?: string;
   created_at: string;
   problem_title?: string;
   theme?: string;
@@ -336,6 +341,53 @@ export default function AdminDashboard() {
       setSelectedTeam(null);
     } catch (error) {
       console.error("Error saving team:", error);
+    }
+  };
+
+  const handleViewPPT = async (team: TeamRegistration) => {
+    if (!team.document_url) return;
+
+    try {
+      const { data } = supabase.storage
+        .from("team-documents")
+        .getPublicUrl(team.document_url);
+
+      if (data?.publicUrl) {
+        // Use Office Online viewer for PPT files
+        const encodedUrl = encodeURIComponent(data.publicUrl);
+        const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodedUrl}&wdOrigin=BROWSELINK`;
+        window.open(viewerUrl, '_blank');
+      }
+    } catch (error) {
+      console.error("Error viewing PPT:", error);
+    }
+  };
+
+  const handleDownloadPPT = async (team: TeamRegistration) => {
+    if (!team.document_url) return;
+
+    try {
+      // Use Supabase download method for proper file download
+      const { data, error } = await supabase.storage
+        .from("team-documents")
+        .download(team.document_url);
+
+      if (error) throw error;
+
+      if (data) {
+        const blob = new Blob([data], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = team.document_filename || 'presentation.ppt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the object URL
+        URL.revokeObjectURL(link.href);
+      }
+    } catch (error) {
+      console.error("Error downloading PPT:", error);
     }
   };
 
@@ -648,6 +700,28 @@ export default function AdminDashboard() {
                                 </td>
                                 <td className="py-3 px-4">
                                   <div className="flex gap-2">
+                                    {team.document_url && (
+                                      <>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleViewPPT(team)}
+                                          className="h-8 w-8 p-0"
+                                          title="View PPT"
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleDownloadPPT(team)}
+                                          className="h-8 w-8 p-0"
+                                          title="Download PPT"
+                                        >
+                                          <Download className="h-4 w-4" />
+                                        </Button>
+                                      </>
+                                    )}
                                     <Button
                                       variant="outline"
                                       size="sm"
