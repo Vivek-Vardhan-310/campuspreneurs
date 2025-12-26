@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Layout } from "@/components/layout/Layout";
+import { toast } from "sonner";
 
 interface Event {
   id: string;
@@ -17,7 +18,7 @@ interface Event {
 export default function EventRegister() {
   const { id: eventId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
@@ -25,11 +26,21 @@ export default function EventRegister() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-  if (!user || !eventId) return;
+    // Wait for auth to load before checking authentication
+    if (authLoading) return;
 
-  fetchEvent();
-  checkRegistration();
-}, [user, eventId]);
+    // Check authentication first
+    if (!user) {
+      toast.error("Authentication Required — Please log in to register for this event.");
+      navigate("/auth");
+      return;
+    }
+
+    if (!eventId) return;
+
+    fetchEvent();
+    checkRegistration();
+  }, [user, authLoading, eventId, navigate]);
 
 
   const fetchEvent = async () => {
