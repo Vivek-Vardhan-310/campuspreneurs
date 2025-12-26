@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { FileText, Download, HelpCircle, Calendar, BookOpen, FileSpreadsheet, Upload } from "lucide-react";
+import { FileText, Download, HelpCircle, Calendar, BookOpen, FileSpreadsheet, Upload, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/useAdmin";
 import { ResourceUploadDialog } from "@/components/admin/ResourceUploadDialog";
+import { DeleteConfirmDialog } from "@/components/admin/DeleteConfirmDialog";
 import { QuerySubmissionForm } from "@/components/resources/QuerySubmissionForm";
 import { AdminQueryList } from "@/components/resources/AdminQueryList";
+import { toast } from "sonner";
 
 const iconMap: Record<string, React.ElementType> = {
   ppt_template: FileText,
@@ -56,6 +58,7 @@ export default function Resources() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
 
   const fetchResources = async () => {
@@ -83,6 +86,46 @@ export default function Resources() {
   const handleDownload = (resource: Resource) => {
     if (resource.file_url) {
       window.open(resource.file_url, "_blank");
+    }
+  };
+
+  const openDeleteDialog = (resource: Resource) => {
+    setSelectedResource(resource);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedResource) return;
+
+    try {
+      // Delete file from storage if it exists
+      if (selectedResource.file_url) {
+        const fileName = selectedResource.file_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from("resources")
+            .remove([fileName]);
+        }
+      }
+
+      // Update resource record to remove file_url and file_type (keep the section but remove the file)
+      const { error } = await supabase
+        .from("resources")
+        .update({
+          file_url: null,
+          file_type: null
+        })
+        .eq("id", selectedResource.id);
+
+      if (error) throw error;
+
+      toast.success("File deleted successfully");
+      fetchResources();
+      setDeleteDialogOpen(false);
+      setSelectedResource(null);
+    } catch (error: any) {
+      console.error("Error deleting file:", error);
+      toast.error(error.message || "Failed to delete file");
     }
   };
 
@@ -134,24 +177,39 @@ export default function Resources() {
                     <div className="mt-4 space-y-2">
                       <Button
                         variant="outline"
-                        className="w-full"
+                        className="w-full p-0"
                         size="sm"
                         onClick={() => handleDownload(resource)}
                         disabled={!resource.file_url}
                       >
-                        <Download className="w-4 h-4" />
-                        {resource.file_url ? `Download ${resource.file_type || "File"}` : "Not Available"}
+                        <div className="flex items-center w-full px-3 py-2">
+                          <Download className="w-4 h-4 flex-shrink-0" />
+                          <span className="ml-2 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                            {resource.file_url ? `Download ${resource.file_type || "File"}` : "Not Available"}
+                          </span>
+                        </div>
                       </Button>
                       {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          className="w-full"
-                          size="sm"
-                          onClick={() => openEditDialog(resource)}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Update File
-                        </Button>
+                        <>
+                          <Button
+                            variant="ghost"
+                            className="w-full"
+                            size="sm"
+                            onClick={() => openEditDialog(resource)}
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Update File
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="w-full"
+                            size="sm"
+                            onClick={() => openDeleteDialog(resource)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete File
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -225,6 +283,15 @@ export default function Resources() {
         onOpenChange={setEditDialogOpen}
         resource={selectedResource}
         onSuccess={fetchResources}
+      />
+
+      {/* Delete Confirm Dialog */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        title="Delete Resource"
+        description={`Are you sure you want to delete "${selectedResource?.title}"? This will permanently remove the file and cannot be undone.`}
       />
     </Layout>
   );
