@@ -11,6 +11,7 @@ interface ProblemStatement {
   problem_statement_id: string;
   title: string;
   description: string;
+  detailed_description: string;
   category: string;
   theme: string;
 }
@@ -34,6 +35,7 @@ export function ProblemFormDialog({
     problem_statement_id: "",
     title: "",
     description: "",
+    detailed_description: "",
     category: "",
     theme: "",
     department: "",
@@ -45,6 +47,7 @@ export function ProblemFormDialog({
         problem_statement_id: problem.problem_statement_id,
         title: problem.title,
         description: problem.description,
+        detailed_description: problem.detailed_description || "",
         category: problem.category,
         theme: problem.theme,
         department: problem.department || "",
@@ -54,6 +57,7 @@ export function ProblemFormDialog({
         problem_statement_id: "",
         title: "",
         description: "",
+        detailed_description: "",
         category: "",
         theme: "",
         department: "",
@@ -104,6 +108,16 @@ export function ProblemFormDialog({
               placeholder="Detailed description of the problem..."
               rows={4}
               required
+            />
+          </div>
+          <div>
+            <Label htmlFor="detailed_description">Detailed Description</Label>
+            <Textarea
+              id="detailed_description"
+              value={formData.detailed_description}
+              onChange={(e) => setFormData({ ...formData, detailed_description: e.target.value })}
+              placeholder="Additional detailed description..."
+              rows={6}
             />
           </div>
           <div>

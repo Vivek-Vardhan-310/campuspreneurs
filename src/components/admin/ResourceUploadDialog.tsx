@@ -54,21 +54,22 @@ export function ResourceUploadDialog({
 
       // Upload new file if selected
       if (file) {
-        const fileExt = file.name.split(".").pop()?.toUpperCase() || "FILE";
-        const fileName = `${resource.section_key}_${Date.now()}.${file.name.split(".").pop()}`;
+        // Sanitize filename for storage key (remove/replace invalid characters)
+        const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const storageKey = `${resource.section_key}_${Date.now()}_${sanitizedFileName}`;
 
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("resources")
-          .upload(fileName, file, { upsert: true });
+          .upload(storageKey, file, { upsert: true });
 
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage
           .from("resources")
-          .getPublicUrl(fileName);
+          .getPublicUrl(storageKey);
 
         fileUrl = urlData.publicUrl;
-        fileType = fileExt;
+        fileType = file.name; // Store original filename in database
       }
 
       // Update resource record

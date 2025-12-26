@@ -74,13 +74,13 @@ export default function Registration() {
 
       // Upload file if selected
       if (selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-        const filePath = fileName;
+        // Sanitize filename for storage key (remove/replace invalid characters)
+        const sanitizedFileName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const storageKey = `${user.id}_${Date.now()}_${sanitizedFileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("team-documents")
-          .upload(filePath, selectedFile);
+          .upload(storageKey, selectedFile);
 
         if (uploadError) {
           console.error(uploadError);
@@ -92,7 +92,7 @@ export default function Registration() {
           return;
         }
 
-        documentUrl = filePath;
+        documentUrl = storageKey;
       }
 
       // Insert registration data
@@ -115,6 +115,7 @@ export default function Registration() {
           phone: formData.phone,
           email: formData.email,
           document_url: documentUrl,
+          document_filename: selectedFile ? selectedFile.name : null,
         });
 
       if (insertError) {

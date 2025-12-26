@@ -39,6 +39,7 @@ interface ProblemStatement {
   problem_statement_id: string;
   title: string;
   description: string;
+  detailed_description: string;
   category: string;
   theme: string;
   department: string;
@@ -517,7 +518,7 @@ export default function Problems() {
                         Description
                       </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-pre-line">
-                        {detailsProblem.description}
+                        {detailsProblem.detailed_description || detailsProblem.description}
                       </td>
                     </tr>
 
