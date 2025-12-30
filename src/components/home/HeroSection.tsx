@@ -8,7 +8,11 @@ export function HeroSection({ frontImage, backImage }: { frontImage: string; bac
   const images = [
     "/BackgroundSlider1.jpeg",
     "/BackgroundSlider2.JPG",
-    "/BackgroundSlider3.JPG"
+    "/BackgroundSlider3.JPG",
+    "/BackgroundSlider4.jpeg",
+    "/BackgroundSlider5.jpeg",
+    "/BackgroundSlider6.jpeg",
+    "/BackgroundSlider7.jpeg"
   ];
 
   useEffect(() => {
