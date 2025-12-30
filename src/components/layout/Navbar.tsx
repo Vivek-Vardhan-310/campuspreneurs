@@ -37,11 +37,11 @@ export function Navbar() {
         <div className="h-14 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">
-                C
-              </span>
-            </div>
+            <img
+              src="/favicon.png"
+              alt="Campuspreneurs Logo"
+              className="w-9 h-9 rounded-lg"
+            />
             <span className="font-semibold text-lg hidden sm:block">
               Campuspreneurs
             </span>
