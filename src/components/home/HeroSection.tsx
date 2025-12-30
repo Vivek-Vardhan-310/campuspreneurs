@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText } from "lucide-react";
 
-export function HeroSection() {
+export function HeroSection({ frontImage, backImage }: { frontImage: string; backImage: string }) {
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90">
       {/* Background Pattern */}
@@ -48,27 +48,17 @@ export function HeroSection() {
           {/* Right - 3D Rotating Advertisement */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative w-80 h-80 lg:w-96 lg:h-96 perspective-1000">
+
               <div className="absolute inset-0 animate-rotate-3d preserve-3d">
-                <div className="absolute inset-0 bg-card rounded-2xl shadow-elevated flex flex-col items-center justify-center p-8 backface-hidden">
-                  <div className="w-16 h-16 rounded-xl bg-secondary flex items-center justify-center mb-4">
-                    <span className="text-3xl">🚀</span>
-                  </div>
-                  <h3 className="font-poppins font-semibold text-xl text-foreground text-center mb-2">
-                    Innovation Challenge
-                  </h3>
-                  <p className="text-muted-foreground text-center text-sm">
-                    Transform real campus problems into innovative solutions
-                  </p>
+                <div className="absolute inset-0 bg-white rounded-2xl shadow-elevated backface-hidden">
+                  <img src={frontImage} alt="Front" className="w-full h-full object-contain rounded-2xl" />
+                </div>
+                <div className="absolute inset-0 bg-white rounded-2xl shadow-elevated rotate-y-180 backface-hidden">
+                  <img src={backImage} alt="Back" className="w-full h-full object-contain rounded-2xl" />
                 </div>
               </div>
               
-              {/* Floating Elements */}
-              <div className="absolute -top-4 -right-4 w-20 h-20 bg-secondary rounded-xl shadow-card flex items-center justify-center animate-float">
-                <span className="text-2xl">💡</span>
-              </div>
-              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-card rounded-xl shadow-card flex items-center justify-center animate-float animation-delay-200">
-                <span className="text-xl">🎯</span>
-              </div>
+
             </div>
           </div>
         </div>
