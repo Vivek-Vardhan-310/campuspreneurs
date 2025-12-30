@@ -49,11 +49,11 @@ export function Footer() {
             <h4 className="font-poppins font-semibold text-lg mb-4">Contact Us</h4>
             <div className="space-y-3">
               <a
-                href="mailto:campuspreneurs@gcet.edu.in"
+                href="mailto:hello.geenovate@gcet.edu.in"
                 className="flex items-center gap-2 text-primary-foreground/80 hover:text-secondary transition-colors text-sm"
               >
                 <Mail className="w-4 h-4" />
-                campuspreneurs@gcet.edu.in
+                hello.geenovate@gcet.edu.in
               </a>
               <div className="flex items-start gap-2 text-primary-foreground/80 text-sm">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
