@@ -1,17 +1,45 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export function HeroSection({ frontImage, backImage }: { frontImage: string; backImage: string }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = [
+    "/BackgroundSlider1.jpeg",
+    "/BackgroundSlider2.JPG",
+    "/BackgroundSlider3.JPG"
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [images.length]);
+
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90">
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+      {/* Background Image Slider */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src={images[currentImageIndex]}
+          alt="Background"
+          className="w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
+        />
+      </div>
+
+      {/* Semi-transparent Overlay */}
+      <div className="absolute inset-0 z-10" style={{ background: 'linear-gradient(135deg, rgba(33, 37, 41, 0.3) 0%, rgba(33, 37, 41, 0.4) 100%)' }}></div>
+
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-10 z-20">
         <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-secondary blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-secondary blur-3xl" />
       </div>
 
-      <div className="container mx-auto px-4 py-20 relative z-10">
+      <div className="container mx-auto px-4 py-20 relative z-30">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="text-center lg:text-left space-y-6">
