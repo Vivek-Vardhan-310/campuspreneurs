@@ -16,7 +16,6 @@ export function Navbar() {
     { name: "About Us", path: "/about" },
     { name: "Events", path: "/events" },
     { name: "Problem Statements", path: "/problems" },
-    { name: "Event Structure", path: "/event-structure" },
     { name: "Resources", path: "/resources" },
     isAdmin
       ? { name: "Dashboard", path: "/admin" }

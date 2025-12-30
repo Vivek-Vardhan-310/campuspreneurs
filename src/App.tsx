@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import Problems from "./pages/Problems";
 import ProblemDetails from "./pages/ProblemDetails";
-import EventStructure from "./pages/EventStructure";
 import Events from "./pages/Events";
 import Resources from "./pages/Resources";
 import Registration from "./pages/Registration";
@@ -40,7 +39,6 @@ const App = () => (
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id/register" element={<EventRegister />} />
             <Route path="/events/:id" element={<EventDetails />} />
-            <Route path="/event-structure" element={<EventStructure />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/registration" element={<Registration />} />
             <Route path="/contact" element={<Contact />} />

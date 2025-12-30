@@ -832,14 +832,6 @@ export default function AdminDashboard() {
                     <p className="text-sm text-muted-foreground">Add, edit or delete events</p>
                   </Link>
                   <Link
-                    to="/event-structure"
-                    className="p-4 rounded-lg border border-border hover:border-secondary hover:bg-accent/50 transition-all"
-                  >
-                    <TrendingUp className="w-6 h-6 text-secondary mb-2" />
-                    <h3 className="font-semibold text-foreground">Edit Event Structure</h3>
-                    <p className="text-sm text-muted-foreground">Update phases and framework</p>
-                  </Link>
-                  <Link
                     to="/resources"
                     className="p-4 rounded-lg border border-border hover:border-secondary hover:bg-accent/50 transition-all"
                   >
