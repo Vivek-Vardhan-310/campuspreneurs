@@ -20,6 +20,10 @@ interface Event {
   mode: string;
   is_active: boolean;
   image_url?: string;
+  organizer_name?: string;
+  organizer_contact?: string;
+  registration_deadline?: string;
+  max_participants?: number;
 }
 
 export default function EventsPage() {

@@ -20,6 +20,10 @@ interface Event {
   mode: string;
   is_active: boolean;
   image_url?: string;
+  organizer_name?: string;
+  organizer_contact?: string;
+  registration_deadline?: string;
+  max_participants?: number;
 }
 
 interface EventFormDialogProps {
@@ -46,6 +50,10 @@ export function EventFormDialog({
     mode: "",
     is_active: true,
     image_url: "",
+    organizer_name: "",
+    organizer_contact: "",
+    registration_deadline: "",
+    max_participants: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -93,6 +101,15 @@ export function EventFormDialog({
         mode: event.mode,
         is_active: event.is_active,
         image_url: event.image_url || "",
+        organizer_name: event.organizer_name || "",
+        organizer_contact: event.organizer_contact || "",
+        registration_deadline: event.registration_deadline
+          ? formatDateForInput(event.registration_deadline)
+          : "",
+        max_participants:
+          typeof event.max_participants === "number"
+            ? String(event.max_participants)
+            : "",
       });
     } else {
       // For adding new events, set min date to now
@@ -112,6 +129,10 @@ export function EventFormDialog({
         mode: "",
         is_active: true,
         image_url: "",
+        organizer_name: "",
+        organizer_contact: "",
+        registration_deadline: "",
+        max_participants: "",
       });
     }
 
@@ -157,7 +178,23 @@ export function EventFormDialog({
         imageUrl = urlData.publicUrl;
       }
 
-      await onSave({ ...formData, image_url: imageUrl });
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        event_date: formData.event_date,
+        location: formData.location,
+        event_type: formData.event_type,
+        mode: formData.mode,
+        is_active: formData.is_active,
+        image_url: imageUrl,
+        organizer_name: formData.organizer_name,
+        organizer_contact: formData.organizer_contact,
+        registration_deadline: formData.registration_deadline || null,
+        max_participants: formData.max_participants
+          ? Number(formData.max_participants)
+          : null,
+      };
+      await onSave(payload);
     } catch (error: any) {
       console.error("Error uploading image:", error);
       toast.error(error.message || "Failed to upload image");
@@ -214,6 +251,48 @@ export function EventFormDialog({
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               placeholder="Event location"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="organizer_name">Organizer</Label>
+            <Input
+              id="organizer_name"
+              value={formData.organizer_name}
+              onChange={(e) => setFormData({ ...formData, organizer_name: e.target.value })}
+              placeholder="Organizer name"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="organizer_contact">Contact</Label>
+            <Input
+              id="organizer_contact"
+              value={formData.organizer_contact}
+              onChange={(e) => setFormData({ ...formData, organizer_contact: e.target.value })}
+              placeholder="Email or phone"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="registration_deadline">Registration Deadline</Label>
+            <Input
+              id="registration_deadline"
+              type="datetime-local"
+              value={formData.registration_deadline}
+              onChange={(e) => setFormData({ ...formData, registration_deadline: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="max_participants">Max Participants</Label>
+            <Input
+              id="max_participants"
+              type="number"
+              min={1}
+              value={formData.max_participants}
+              onChange={(e) => setFormData({ ...formData, max_participants: e.target.value })}
+              placeholder="e.g., 200"
               required
             />
           </div>

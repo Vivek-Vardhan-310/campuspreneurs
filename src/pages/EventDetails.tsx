@@ -14,10 +14,10 @@ interface Event {
   location: string;
   event_type: string;
   mode: string;
-  registration_deadline: string;
-  max_participants: number;
-  organizer_name: string;
-  organizer_contact: string;
+  registration_deadline: string | null;
+  max_participants: number | null;
+  organizer_name: string | null;
+  organizer_contact: string | null;
   is_registration_open: boolean;
 }
 
@@ -103,14 +103,17 @@ export default function EventDetails() {
             </div>
 
             <div className="border-t pt-4 text-sm space-y-1">
-              <p><strong>Organizer:</strong> {event.organizer_name}</p>
-              <p><strong>Contact:</strong> {event.organizer_contact}</p>
+              <p><strong>Organizer:</strong> {event.organizer_name || "Not provided"}</p>
+              <p><strong>Contact:</strong> {event.organizer_contact || "Not provided"}</p>
               <p>
                 <strong>Registration Deadline:</strong>{" "}
-                {new Date(event.registration_deadline).toLocaleDateString("en-IN")}
+                {event.registration_deadline
+                  ? new Date(event.registration_deadline).toLocaleDateString("en-IN")
+                  : "Not provided"}
               </p>
               <p>
-                <strong>Max Participants:</strong> {event.max_participants}
+                <strong>Max Participants:</strong>{" "}
+                {event.max_participants ?? "Not provided"}
               </p>
             </div>
 
